@@ -36,6 +36,15 @@ export default function Dashboard() {
         </div>
 
         <div className="col-md-4">
+          <div className="card text-white bg-warning mb-3">
+            <div className="card-body">
+              <h5 className="card-title">Received</h5>
+              <p className="card-text fs-4">{received}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-md-4">
           <div className="card text-white bg-primary mb-3">
             <div className="card-body">
               <h5 className="card-title">In Progress</h5>

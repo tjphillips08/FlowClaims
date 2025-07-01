@@ -10,8 +10,18 @@ function App() {
       <div className="d-flex flex-column min-vh-100">
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
           <div className="container">
-            <Link className="navbar-brand" to="/">FlowClaims</Link>
-            <div className="collapse navbar-collapse">
+            <Link className="navbar-brand fw-bold" to="/">
+              🌀 FlowClaims
+            </Link>
+            <button
+              className="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbarNav"
+            >
+              <span className="navbar-toggler-icon"></span>
+            </button>
+            <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
                 <li className="nav-item">
                   <Link className="nav-link" to="/">Dashboard</Link>
@@ -36,8 +46,8 @@ function App() {
           </Routes>
         </main>
 
-        <footer className="bg-light text-center py-3">
-          <small>© 2025 FlowClaims</small>
+        <footer className="bg-light text-center py-3 mt-auto border-top">
+          <small>© 2025 FlowClaims — Claims Workflow Tracker</small>
         </footer>
       </div>
     </Router>
@@ -45,5 +55,3 @@ function App() {
 }
 
 export default App;
-
-
