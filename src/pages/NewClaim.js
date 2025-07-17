@@ -1,34 +1,51 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function NewClaim() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
-    name: "",
+    claimantName: "",
     status: "Received",
-    date: "",
+    receivedDate: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [submitStatus, setSubmitStatus] = useState(null);
 
   const validate = () => {
     const errs = {};
-    if (!formData.name.trim()) errs.name = "Name is required.";
-    if (!formData.date) errs.date = "Date is required.";
+    if (!formData.claimantName.trim()) errs.claimantName = "Name is required.";
+    if (!formData.receivedDate) errs.receivedDate = "Date is required.";
     return errs;
   };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setSubmitStatus(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
 
     if (Object.keys(validationErrors).length === 0) {
-      console.log("New Claim Submitted:", formData);
-      alert("Claim submitted successfully!");
-      setFormData({ name: "", status: "Received", date: "" });
+      try {
+        const response = await fetch("http://localhost:8080/api/claims", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+
+        if (!response.ok) throw new Error("Failed to submit claim");
+
+        await response.json();
+        navigate("/claims"); // ✅ Redirect to claim list
+      } catch (error) {
+        setSubmitStatus("Error submitting claim. Please try again.");
+        console.error("Submit error:", error);
+      }
     }
   };
 
@@ -38,16 +55,16 @@ export default function NewClaim() {
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="mb-3">
-          <label htmlFor="name" className="form-label">Claimant Name</label>
+          <label htmlFor="claimantName" className="form-label">Claimant Name</label>
           <input
             type="text"
-            className={`form-control ${errors.name ? "is-invalid" : ""}`}
-            id="name"
-            name="name"
-            value={formData.name}
+            className={`form-control ${errors.claimantName ? "is-invalid" : ""}`}
+            id="claimantName"
+            name="claimantName"
+            value={formData.claimantName}
             onChange={handleChange}
           />
-          {errors.name && <div className="invalid-feedback">{errors.name}</div>}
+          {errors.claimantName && <div className="invalid-feedback">{errors.claimantName}</div>}
         </div>
 
         <div className="mb-3">
@@ -66,20 +83,26 @@ export default function NewClaim() {
         </div>
 
         <div className="mb-3">
-          <label htmlFor="date" className="form-label">Date</label>
+          <label htmlFor="receivedDate" className="form-label">Date</label>
           <input
             type="date"
-            className={`form-control ${errors.date ? "is-invalid" : ""}`}
-            id="date"
-            name="date"
-            value={formData.date}
+            className={`form-control ${errors.receivedDate ? "is-invalid" : ""}`}
+            id="receivedDate"
+            name="receivedDate"
+            value={formData.receivedDate}
             onChange={handleChange}
           />
-          {errors.date && <div className="invalid-feedback">{errors.date}</div>}
+          {errors.receivedDate && <div className="invalid-feedback">{errors.receivedDate}</div>}
         </div>
 
         <button type="submit" className="btn btn-primary">Submit Claim</button>
       </form>
+
+      {submitStatus && (
+        <div className={`mt-3 alert ${submitStatus.includes("Error") ? "alert-danger" : "alert-success"}`}>
+          {submitStatus}
+        </div>
+      )}
     </div>
   );
 }
