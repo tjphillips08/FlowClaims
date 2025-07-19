@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function NewClaim() {
@@ -8,10 +8,29 @@ export default function NewClaim() {
     claimantName: "",
     status: "Received",
     receivedDate: "",
+    latitude: "",
+    longitude: "",
   });
 
   const [errors, setErrors] = useState({});
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [geoError, setGeoError] = useState(null);
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }));
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setGeoError("Location access denied. Location will not be saved.");
+      }
+    );
+  }, []);
 
   const validate = () => {
     const errs = {};
@@ -41,7 +60,7 @@ export default function NewClaim() {
         if (!response.ok) throw new Error("Failed to submit claim");
 
         await response.json();
-        navigate("/claims"); // ✅ Redirect to claim list
+        navigate("/claims");
       } catch (error) {
         setSubmitStatus("Error submitting claim. Please try again.");
         console.error("Submit error:", error);
@@ -52,6 +71,12 @@ export default function NewClaim() {
   return (
     <div>
       <h2 className="mb-4">📝 New Claim</h2>
+
+      {geoError && (
+        <div className="alert alert-warning" role="alert">
+          ⚠️ {geoError}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} noValidate>
         <div className="mb-3">
@@ -93,6 +118,17 @@ export default function NewClaim() {
             onChange={handleChange}
           />
           {errors.receivedDate && <div className="invalid-feedback">{errors.receivedDate}</div>}
+        </div>
+
+        <div className="row mb-3">
+          <div className="col">
+            <label className="form-label">Latitude</label>
+            <input type="text" className="form-control" value={formData.latitude} disabled />
+          </div>
+          <div className="col">
+            <label className="form-label">Longitude</label>
+            <input type="text" className="form-control" value={formData.longitude} disabled />
+          </div>
         </div>
 
         <button type="submit" className="btn btn-primary">Submit Claim</button>

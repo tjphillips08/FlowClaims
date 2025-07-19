@@ -1,75 +1,86 @@
 import { useParams, Link } from "react-router-dom";
-import { claims } from "../api/mockData";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function ClaimDetails() {
   const { id } = useParams();
-  const claim = claims.find((c) => c.id === parseInt(id));
+  const [claim, setClaim] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Notes state
   const [notes, setNotes] = useState([]);
   const [noteInput, setNoteInput] = useState("");
+  const [locationName, setLocationName] = useState("Loading location...");
 
-  // Upload states
-  const [uploading, setUploading] = useState(false);
-  const [uploadMessage, setUploadMessage] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState([]);
+  useEffect(() => {
+    fetch(`http://localhost:8080/api/claims/${id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Claim not found");
+        return res.json();
+      })
+      .then((data) => {
+        setClaim(data);
+        setNotes(data.notes || []);
+        setLoading(false);
 
-  if (!claim) {
+        // Reverse geocode if lat/lng present
+        if (data.latitude && data.longitude) {
+          fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${data.latitude}&lon=${data.longitude}`
+          )
+            .then((res) => res.json())
+            .then((locationData) => {
+              const address = locationData.address || {};
+              // Prefer city, town, village, then fallback to display_name
+              const name =
+                address.city ||
+                address.town ||
+                address.village ||
+                locationData.display_name ||
+                "Unknown location";
+              setLocationName(name);
+            })
+            .catch(() => setLocationName("Unknown location"));
+        } else {
+          setLocationName("Location not available");
+        }
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, [id]);
+
+  const handleAddNote = async () => {
+    if (noteInput.trim() === "") return;
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/notes/add-to-claim/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: noteInput }),
+      });
+
+      if (!response.ok) throw new Error("Failed to add note");
+
+      const newNote = await response.json();
+      setNotes((prev) => [newNote, ...prev]);
+      setNoteInput("");
+    } catch (err) {
+      console.error(err);
+      alert("Error adding note.");
+    }
+  };
+
+  if (loading) return <div>Loading claim details...</div>;
+  if (error)
     return (
       <div>
-        <h2>Claim Not Found</h2>
+        <h2>Error: {error}</h2>
         <Link to="/claims" className="btn btn-secondary mt-3">
           Back to Claims
         </Link>
       </div>
     );
-  }
-
-  // Add note handler
-  const handleAddNote = () => {
-    if (noteInput.trim() !== "") {
-      setNotes([{ text: noteInput, date: new Date().toLocaleString() }, ...notes]);
-      setNoteInput("");
-    }
-  };
-
-  // File upload handler
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      setUploading(true);
-      setUploadMessage("");
-
-      const res = await fetch("http://localhost:5050/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setUploadMessage(`Uploaded: ${data.originalName}`);
-
-        // Add uploaded file to state list
-        setUploadedFiles((prev) => [
-          ...prev,
-          { name: data.originalName, path: data.path },
-        ]);
-      } else {
-        setUploadMessage(`Upload failed: ${data.error || "Unknown error"}`);
-      }
-    } catch (err) {
-      setUploadMessage("Upload failed: Network error");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   return (
     <div>
@@ -78,7 +89,8 @@ export default function ClaimDetails() {
       <div className="card mb-4">
         <div className="card-header bg-primary text-white">Claim #{claim.id}</div>
         <div className="card-body">
-          <h5 className="card-title">{claim.name}</h5>
+          <h5 className="card-title">{claim.claimantName}</h5>
+
           <p className="card-text">
             <strong>Status:</strong>{" "}
             <span
@@ -93,19 +105,31 @@ export default function ClaimDetails() {
               {claim.status}
             </span>
           </p>
+
           <p className="card-text">
-            <strong>Date:</strong> {claim.date}
+            <strong>Date:</strong> {new Date(claim.receivedDate).toLocaleDateString()}
           </p>
+
+          {/* Location Name */}
           <p className="card-text">
-            <strong>Description:</strong> This is a placeholder description for
-            the claim submitted by {claim.name}.
+            <strong>Location:</strong> {locationName}
+          </p>
+
+          {/* Weather Summary */}
+          <p className="card-text">
+            <strong>Weather Summary:</strong>{" "}
+            {claim.weatherSummary ? (
+              <span>{claim.weatherSummary}</span>
+            ) : (
+              <em>No weather data available</em>
+            )}
           </p>
         </div>
       </div>
 
       {/* Notes Section */}
       <div className="card mb-4">
-        <div className="card-header">🗒️ Claim Notes</div>
+        <div className="card-header">🗒️ Notes</div>
         <div className="card-body">
           <div className="mb-3">
             <textarea
@@ -114,7 +138,7 @@ export default function ClaimDetails() {
               placeholder="Add a note..."
               value={noteInput}
               onChange={(e) => setNoteInput(e.target.value)}
-            ></textarea>
+            />
           </div>
           <button className="btn btn-outline-primary mb-3" onClick={handleAddNote}>
             Add Note
@@ -126,44 +150,13 @@ export default function ClaimDetails() {
             <ul className="list-group">
               {notes.map((note, index) => (
                 <li key={index} className="list-group-item">
-                  <small className="text-muted d-block">{note.date}</small>
+                  <small className="text-muted d-block">
+                    {new Date(note.createdAt).toLocaleString()}
+                  </small>
                   {note.text}
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-      </div>
-
-      {/* File Upload Section */}
-      <div className="card mb-4">
-        <div className="card-header">📎 File Upload</div>
-        <div className="card-body">
-          <input
-            type="file"
-            className="form-control mb-2"
-            onChange={handleFileUpload}
-            disabled={uploading}
-          />
-          {uploadMessage && <p className="text-muted">{uploadMessage}</p>}
-
-          {uploadedFiles.length > 0 && (
-            <div className="mt-3">
-              <h6>Uploaded Files:</h6>
-              <ul className="list-group">
-                {uploadedFiles.map((file, idx) => (
-                  <li key={idx} className="list-group-item">
-                    <a
-                      href={`http://localhost:5050${file.path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {file.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
           )}
         </div>
       </div>

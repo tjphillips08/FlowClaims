@@ -3,6 +3,7 @@ import Dashboard from "./pages/Dashboard";
 import ClaimList from "./pages/ClaimList";
 import ClaimDetails from "./pages/ClaimDetails";
 import NewClaim from "./pages/NewClaim";
+import TrendsPage from "./pages/Trends";
 
 function App() {
   return (
@@ -32,6 +33,9 @@ function App() {
                 <li className="nav-item">
                   <Link className="nav-link" to="/new-claim">New Claim</Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/trends">Trends</Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -43,6 +47,7 @@ function App() {
             <Route path="/claims" element={<ClaimList />} />
             <Route path="/claims/:id" element={<ClaimDetails />} />
             <Route path="/new-claim" element={<NewClaim />} />
+            <Route path="/trends" element={<TrendsPage />} />
           </Routes>
         </main>
 

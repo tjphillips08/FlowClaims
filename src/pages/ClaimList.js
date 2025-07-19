@@ -1,19 +1,41 @@
-import { useState } from "react";
-import { claims as mockClaims } from "../api/mockData";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 export default function ClaimList() {
+  const [claims, setClaims] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  const filteredClaims = mockClaims.filter((claim) => {
-    const matchesSearch = claim.name.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    fetch("http://localhost:8080/api/claims")  // Adjust the base URL if different
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch claims");
+        return res.json();
+      })
+      .then((data) => {
+        setClaims(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  const filteredClaims = claims.filter((claim) => {
+    // Adjust property names to match your Claim model fields
+    const matchesSearch = claim.claimantName
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "All" || claim.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const handleSearch = (e) => setSearchTerm(e.target.value);
-  const handleStatusChange = (e) => setStatusFilter(e.target.value);
+  if (loading) return <div>Loading claims...</div>;
+  if (error) return <div className="text-danger">Error: {error}</div>;
 
   return (
     <div>
@@ -24,13 +46,17 @@ export default function ClaimList() {
           <input
             type="text"
             className="form-control"
-            placeholder="Search by name..."
+            placeholder="Search by claimant name..."
             value={searchTerm}
-            onChange={handleSearch}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="col-md-6">
-          <select className="form-select" value={statusFilter} onChange={handleStatusChange}>
+          <select
+            className="form-select"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
             <option value="All">All Statuses</option>
             <option value="Received">Received</option>
             <option value="In Progress">In Progress</option>
@@ -43,37 +69,47 @@ export default function ClaimList() {
         <thead className="table-light">
           <tr>
             <th>ID</th>
-            <th>Name</th>
+            <th>Claimant Name</th>
             <th>Status</th>
-            <th>Date</th>
+            <th>Received Date</th>
             <th>Details</th>
           </tr>
         </thead>
         <tbody>
-          {filteredClaims.map((claim) => (
-            <tr key={claim.id}>
-              <td>{claim.id}</td>
-              <td>{claim.name}</td>
-              <td>
-                <span className={`badge bg-${
-                  claim.status === "Completed" ? "success" :
-                  claim.status === "In Progress" ? "primary" :
-                  "warning"
-                }`}>
-                  {claim.status}
-                </span>
-              </td>
-              <td>{claim.date}</td>
-              <td>
-                <Link to={`/claims/${claim.id}`} className="btn btn-sm btn-outline-primary">
-                  View
-                </Link>
-              </td>
-            </tr>
-          ))}
-          {filteredClaims.length === 0 && (
+          {filteredClaims.length > 0 ? (
+            filteredClaims.map((claim) => (
+              <tr key={claim.id}>
+                <td>{claim.id}</td>
+                <td>{claim.claimantName}</td>
+                <td>
+                  <span
+                    className={`badge bg-${
+                      claim.status === "Completed"
+                        ? "success"
+                        : claim.status === "In Progress"
+                        ? "primary"
+                        : "warning"
+                    }`}
+                  >
+                    {claim.status}
+                  </span>
+                </td>
+                <td>{new Date(claim.receivedDate).toLocaleDateString()}</td>
+                <td>
+                  <Link
+                    to={`/claims/${claim.id}`}
+                    className="btn btn-sm btn-outline-primary"
+                  >
+                    View
+                  </Link>
+                </td>
+              </tr>
+            ))
+          ) : (
             <tr>
-              <td colSpan="5" className="text-center text-muted">No claims found.</td>
+              <td colSpan="5" className="text-center text-muted">
+                No claims found.
+              </td>
             </tr>
           )}
         </tbody>
@@ -81,5 +117,3 @@ export default function ClaimList() {
     </div>
   );
 }
-
-  
