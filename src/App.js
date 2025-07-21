@@ -1,9 +1,9 @@
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
 import ClaimList from "./pages/ClaimList";
 import ClaimDetails from "./pages/ClaimDetails";
 import NewClaim from "./pages/NewClaim";
-import TrendsPage from "./pages/Trends";
+import DashboardPage from "./pages/Dashboard";
+import HeatMapView from "./pages/HeatMapView";
 
 function App() {
   return (
@@ -25,16 +25,16 @@ function App() {
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
                 <li className="nav-item">
-                  <Link className="nav-link" to="/">Dashboard</Link>
-                </li>
-                <li className="nav-item">
                   <Link className="nav-link" to="/claims">Claims</Link>
                 </li>
                 <li className="nav-item">
                   <Link className="nav-link" to="/new-claim">New Claim</Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" to="/trends">Trends</Link>
+                  <Link className="nav-link" to="/dashboard">Dashboard</Link>
+                </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to="/heatmapview">Heat Map</Link>
                 </li>
               </ul>
             </div>
@@ -43,11 +43,11 @@ function App() {
 
         <main className="container my-4 flex-grow-1">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
             <Route path="/claims" element={<ClaimList />} />
             <Route path="/claims/:id" element={<ClaimDetails />} />
             <Route path="/new-claim" element={<NewClaim />} />
-            <Route path="/trends" element={<TrendsPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/heatmapview" element={<HeatMapView />} />
           </Routes>
         </main>
 
