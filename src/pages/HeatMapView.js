@@ -89,7 +89,7 @@ const HeatMapView = () => {
   const [showMarkers, setShowMarkers] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/heatmap')
+    fetch('${process.env.REACT_APP_API_BASE_URL}/heatmap')
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();

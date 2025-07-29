@@ -10,7 +10,9 @@ export default function ClaimList() {
   const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
-    fetch("http://localhost:8080/api/claims")  // Adjust the base URL if different
+    console.log("API base URL:", process.env.REACT_APP_API_BASE_URL);
+
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/claims`)  // Adjust the base URL if different
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch claims");
         return res.json();

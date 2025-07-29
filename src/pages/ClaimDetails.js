@@ -12,7 +12,7 @@ export default function ClaimDetails() {
   const [locationName, setLocationName] = useState("Loading location...");
 
   useEffect(() => {
-    fetch(`http://localhost:8080/api/claims/${id}`)
+    fetch(`${process.env.REACT_APP_API_BASE_URL}/claims/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("Claim not found");
         return res.json();
@@ -54,7 +54,7 @@ export default function ClaimDetails() {
     if (noteInput.trim() === "") return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/notes/add-to-claim/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/notes/add-to-claim/${id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: noteInput }),

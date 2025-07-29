@@ -43,6 +43,7 @@ function App() {
 
         <main className="container my-4 flex-grow-1">
           <Routes>
+            <Route path="/" element={<ClaimList />} />
             <Route path="/claims" element={<ClaimList />} />
             <Route path="/claims/:id" element={<ClaimDetails />} />
             <Route path="/new-claim" element={<NewClaim />} />

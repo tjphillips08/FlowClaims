@@ -51,7 +51,7 @@ export default function NewClaim() {
 
     if (Object.keys(validationErrors).length === 0) {
       try {
-        const response = await fetch("http://localhost:8080/api/claims", {
+        const response = await fetch("${process.env.REACT_APP_API_BASE_URL}/claims", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData),

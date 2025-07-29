@@ -22,7 +22,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchAndProcess = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/claims");
+        const res = await fetch("${process.env.REACT_APP_API_BASE_URL}/claims");
         const rawClaims = await res.json();
 
         const _statusCounts = {};
